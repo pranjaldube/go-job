@@ -5,9 +5,11 @@ import (
 	"image"
 	_ "image/jpeg"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"path"
+	"time"
 )
 
 func DownloadImage(url string) (int, error) {
@@ -52,6 +54,9 @@ func (h handler) ProcessJob(images_payload ImagesPayload, job Job) {
 			var image Image
 
 			perimeter, err := DownloadImage(url)
+
+			n := int64(1 + rand.Float64()*3)
+			time.Sleep(time.Duration(n) * time.Millisecond)
 
 			image.StoreId = visit.StoreId
 			image.Url = url
