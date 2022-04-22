@@ -1,5 +1,6 @@
-# go-job
+# Backend Intern Assignment : Retail Pulse
 
-TODO:
-- [ ] post method form parse
-- [ ] goroutine function
+
+## Installation and Setup
+
+## Work Environment

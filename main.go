@@ -28,7 +28,8 @@ func viperEnvVariable(key string) string {
 }
 
 func main() {
-	dbURL := viperEnvVariable("DATABASE_URL")
+	dbUser, dbPassword, dbHost, dbPort, dbName := viperEnvVariable("POSTGRES_USER"), viperEnvVariable("POSTGRES_PASSWORD"), viperEnvVariable("DATABASE_HOST"), viperEnvVariable("DATABASE_PORT"), viperEnvVariable("POSTGRES_DB")
+	dbURL := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", dbUser, dbPassword, dbHost, dbPort, dbName)
 	DB := InitDB(dbURL)
 	h := DBHandler(DB)
 	router := mux.NewRouter()
