@@ -1,5 +1,7 @@
 package main
 
+import "gorm.io/gorm"
+
 // json responses
 type StorePayload struct {
 	StoreId   string   `json:"store_id"`
@@ -25,12 +27,17 @@ type JobStatusResponse struct {
 
 // db models
 type Job struct {
-	Id     int    `json:"id" gorm:"primaryKey"`
+	gorm.Model
 	Status string `json:"status"`
 }
 
 type Image struct {
-	Id      int    `json:"id" gorm:"primaryKey"`
-	StoreId string `json:"store_id"`
-	Url     string `json:"url"`
+	gorm.Model
+	JobId        int    `json:"job_id"`
+	Job          Job    `json:"job" gorm:"foreignKey:JobId"`
+	StoreId      string `json:"store_id"`
+	Url          string `json:"url"`
+	Perimeter    int    `json:"perimeter"`
+	Success      bool   `json:"success"`
+	ErrorMessage string `json:"error"`
 }

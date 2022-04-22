@@ -31,14 +31,13 @@ func (h handler) JobSubmit(w http.ResponseWriter, r *http.Request) {
 	var job Job
 	job.Status = "ongoing"
 
-	if result := h.DB.Create(&job); result.Error != nil {
-		fmt.Println(result.Error)
-	}
+	err = h.DB.Create(&job).Error
+	checkErr(err)
 
 	// goroutine
 	go h.ProcessJob(images_payload, job)
 
-	var response = map[string]int{"job_id": job.Id}
+	var response = map[string]int{"job_id": int(job.Model.ID)}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -48,12 +47,10 @@ func (h handler) JobSubmit(w http.ResponseWriter, r *http.Request) {
 func (h handler) JobStatus(w http.ResponseWriter, r *http.Request) {
 	jobid := r.URL.Query().Get("jobid")
 
-	var response map[string]string
-
 	if jobid == "" {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		response = map[string]string{"status": "error", "message": "you are missing jobid query parameter in the job status api"}
+		response := map[string]string{"status": "error", "message": "you are missing jobid query parameter in the job status api"}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
@@ -68,7 +65,7 @@ func (h handler) JobStatus(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		response = map[string]string{}
+		response := map[string]string{}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
@@ -77,14 +74,25 @@ func (h handler) JobStatus(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	if job.Status == "completed" || job.Status == "ongoing" {
-		response = map[string]string{"status": job.Status, "job_id": jobid}
+		response := map[string]string{"status": job.Status, "job_id": jobid}
+		json.NewEncoder(w).Encode(response)
+		return
 	}
 
 	if job.Status == "failed" {
-		joberrors := "nil"
+		images := make([]Image, 0)
 
-		response = map[string]string{"status": job.Status, "job_id": jobid, "error": joberrors}
+		joberrors := make([]map[string]string, 0)
+
+		err := h.DB.Where("job_id = ? AND success = false", int(job.Model.ID)).Find(&images).Error
+		checkErr(err)
+
+		for _, image := range images {
+			joberrors = append(joberrors, map[string]string{"store_id": image.StoreId, "error": image.ErrorMessage})
+		}
+
+		response := map[string]interface{}{"status": job.Status, "job_id": jobid, "error": joberrors}
+		json.NewEncoder(w).Encode(response)
+		return
 	}
-
-	json.NewEncoder(w).Encode(response)
 }
